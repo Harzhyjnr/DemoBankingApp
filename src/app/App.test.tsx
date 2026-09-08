@@ -48,22 +48,24 @@ function RepresentativeDialog() {
 }
 
 describe('AppShell', () => {
-  it('renders the page shell', () => {
-    render(
-      <MemoryRouter>
-        <AppShell />
-      </MemoryRouter>,
+  function renderShell() {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AppShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
     )
+  }
+
+  it('renders the page shell', () => {
+    renderShell()
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {
-    const { container } = render(
-      <MemoryRouter>
-        <AppShell />
-      </MemoryRouter>,
-    )
+    const { container } = renderShell()
     expect(await axe(container)).toHaveNoViolations()
   })
 })

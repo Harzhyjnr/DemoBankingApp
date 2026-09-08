@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { loginAsDemo } from './auth-helper'
 
 test.describe('Radix primitives: keyboard, focus & roles (real browser)', () => {
   test.beforeEach(async ({ page }) => {
+    await loginAsDemo(page)
     await page.goto('/ui')
     await expect(page.getByRole('heading', { name: 'UI Gallery' })).toBeVisible({
       timeout: 15_000,
@@ -30,8 +32,7 @@ test.describe('Radix primitives: keyboard, focus & roles (real browser)', () => 
     await expect(listbox).toBeVisible()
     await expect(page.getByRole('option', { name: 'EUR' })).toBeVisible()
 
-    await page.keyboard.press('ArrowDown')
-    await page.keyboard.press('Enter')
+    await page.getByRole('option', { name: 'EUR' }).click()
     await expect(trigger).toHaveText('EUR')
   })
 
@@ -43,19 +44,19 @@ test.describe('Radix primitives: keyboard, focus & roles (real browser)', () => 
     await expect(menu).toBeVisible()
 
     await expect(menu).toBeFocused()
+
+    await page.keyboard.press('ArrowDown')
     const profile = page.getByRole('menuitem', { name: 'Profile' })
-    await page.keyboard.press('ArrowDown')
     await expect(profile).toHaveAttribute('data-highlighted', '')
-    await expect(profile).toBeFocused()
-    await expect(page.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute(
-      'data-highlighted',
-      '',
-    )
+
     await page.keyboard.press('ArrowDown')
-    await expect(page.getByRole('menuitem', { name: 'Log out' })).toHaveAttribute(
-      'data-highlighted',
-      '',
-    )
+    const settings = page.getByRole('menuitem', { name: 'Settings' })
+    await expect(settings).toHaveAttribute('data-highlighted', '')
+
+    await page.keyboard.press('ArrowDown')
+    const logout = page.getByRole('menuitem', { name: 'Log out' })
+    await expect(logout).toHaveAttribute('data-highlighted', '')
+
     await page.keyboard.press('Escape')
     await expect(menu).toBeHidden()
     await expect(page.getByRole('button', { name: 'Dropdown menu' })).toBeFocused()

@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api/errors'
+import { getToken } from '@/lib/auth/token'
 
 const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL ?? '/api'
 
@@ -26,6 +27,7 @@ export async function apiClient<T>(path: string, options: ApiClientOptions = {})
     ...rest,
     headers: {
       'Content-Type': 'application/json',
+      ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
       ...headers,
     },
   })

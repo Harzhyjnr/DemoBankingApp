@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test'
+import { loginAsDemo } from './auth-helper'
 
-test('app shell loads with the placeholder dashboard', async ({ page }) => {
-  await page.goto('/')
+test('app shell loads with the placeholder dashboard after login', async ({ page }) => {
+  await loginAsDemo(page)
   await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
 })
 
 test('mobile viewport shows the drawer navigation', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.goto('/')
+  await loginAsDemo(page)
 
   // Desktop sidebar is hidden on mobile.
   await expect(page.getByRole('navigation', { name: 'Primary' })).toBeHidden()

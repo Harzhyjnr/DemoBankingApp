@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
 import { server } from '@/mocks/server'
+import { db } from '@/mocks/db'
+import { clearToken } from '@/lib/auth/token'
 
 // --- jsdom 25 gaps that Radix + testing-library rely on ---
 
@@ -56,6 +58,8 @@ if (!('ResizeObserver' in globalThis)) {
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   server.resetHandlers()
+  db.reset()
+  clearToken()
   cleanup()
 })
 afterAll(() => server.close())
