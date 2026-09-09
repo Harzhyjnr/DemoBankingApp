@@ -90,7 +90,7 @@ export interface Paginated<T> {
   totalPages: number
 }
 
-export interface PaginationParams {
+export type PaginationParams = {
   page?: number
   limit?: number
   category?: string
