@@ -45,7 +45,7 @@ describe('AccountDetailPage', () => {
 
     const firstTxn = db.getAccountTransactions('usr_demo', 'acc_checking', { page: 1, limit: 10 })
       .items[0]
-    expect(await screen.findByText(firstTxn.description)).toBeInTheDocument()
+    expect((await screen.findAllByText(firstTxn.description)).length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows an empty state and back link when the account is unknown', async () => {

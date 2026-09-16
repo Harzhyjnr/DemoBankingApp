@@ -1,4 +1,36 @@
-export type Currency = 'USD' | 'EUR' | 'GBP'
+export type Currency = 'NGN' | 'USD' | 'EUR' | 'GBP'
+
+export type AssetSymbol = 'BTC' | 'ETH' | 'USDT'
+
+export interface CryptoHolding {
+  symbol: AssetSymbol
+  /** Human-readable coin amount, e.g. 0.2415 BTC. Stored as a number for simplicity. */
+  balance: number
+  /** Value of the holding in minor units of the preferred currency (NGN default). */
+  value: number
+}
+
+export interface MarketPrice {
+  symbol: AssetSymbol
+  name: string
+  /** Price per coin in minor units of the preferred currency (kobo for NGN). */
+  price: number
+  /** Signed 24h change as a percentage, e.g. 3.42 or -1.2. */
+  change24h: number
+  sparkline: number[]
+}
+
+export interface PortfolioSummary {
+  /** Total value of naira cash + crypto, in minor units of the preferred currency. */
+  totalValue: number
+  /** Value of naira bank balances, in minor units. */
+  cashValue: number
+  /** Value of crypto holdings, in minor units. */
+  cryptoValue: number
+  /** Signed 24h change of the portfolio percentage. */
+  change24h: number
+  currency: Currency
+}
 
 export interface Money {
   /** Integer minor units (cents/pence), e.g. 12345 = $123.45. Signed for transactions. */

@@ -6,7 +6,79 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'ss03', 'zero';
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background-color: hsl(var(--primary) / 0.28);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: hsl(var(--muted-foreground) / 0.25);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.4);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  .card-crypto {
+    @apply rounded-2xl border bg-card text-card-foreground shadow-crypto ring-1 ring-white/5;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent;
+  }
+  .text-gradient-warm {
+    @apply bg-gradient-to-r from-lime-300 via-emerald-300 to-teal-300 bg-clip-text text-transparent;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--primary) / 0.14) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary) / 0.14) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .bg-radial-fade {
+    mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 72%);
+  }
+  .glass {
+    @apply border border-white/10 bg-white/5 backdrop-blur-md;
+  }
+  .glow-dot {
+    box-shadow:
+      0 0 0 4px hsl(var(--primary) / 0.18),
+      0 0 18px 2px hsl(var(--primary) / 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -28,7 +28,7 @@ describe('AccountsPage', () => {
     renderPage()
 
     const accounts = db.getUserAccounts('usr_demo')
-    expect(await screen.findByText('Everyday Checking')).toBeInTheDocument()
+    expect(await screen.findByText(accounts[0].name)).toBeInTheDocument()
     for (const account of accounts) {
       expect(screen.getByRole('link', { name: new RegExp(account.name) })).toHaveAttribute(
         'href',

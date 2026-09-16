@@ -9,7 +9,7 @@ export interface MockUserRecord {
   lastName: string
   email: string
   password: string
-  preferredCurrency: 'USD' | 'EUR' | 'GBP'
+  preferredCurrency: 'NGN' | 'USD' | 'EUR' | 'GBP'
   createdAt: string
 }
 
@@ -26,10 +26,10 @@ const ACCOUNT_DEFS: Array<{
   name: string
   last4: string
 }> = [
-  { id: 'acc_checking', type: 'checking', name: 'Everyday Checking', last4: '4821' },
-  { id: 'acc_spending', type: 'checking', name: 'Spending Checking', last4: '0934' },
-  { id: 'acc_savings', type: 'savings', name: 'High Yield Savings', last4: '7762' },
-  { id: 'acc_credit', type: 'credit', name: 'Travel Credit Card', last4: '5501' },
+  { id: 'acc_checking', type: 'checking', name: 'Naija Everyday', last4: '4821' },
+  { id: 'acc_spending', type: 'checking', name: 'Spend Account', last4: '0934' },
+  { id: 'acc_savings', type: 'savings', name: 'Kobo Savings', last4: '7762' },
+  { id: 'acc_credit', type: 'credit', name: 'Travel Card', last4: '5501' },
 ]
 
 const CATEGORY_MERCHANTS: Record<string, string[]> = {
@@ -58,11 +58,11 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
 
   const user: MockUserRecord = {
     id: 'usr_demo',
-    firstName: faker.person.firstName(),
-    lastName: faker.person.lastName(),
+    firstName: 'Chiamaka',
+    lastName: 'Okafor',
     email: 'demo@bank.com',
     password: 'demo1234',
-    preferredCurrency: 'USD',
+    preferredCurrency: 'NGN',
     createdAt: '2024-01-15T08:00:00.000Z',
   }
 
@@ -81,7 +81,8 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
     base: Date,
     description?: string,
   ) => {
-    const amount = type === 'debit' ? -absAmount : absAmount
+    const scaled = Math.round(absAmount * 100)
+    const amount = type === 'debit' ? -scaled : scaled
     const day = faker.number.int({ min: 1, max: 28 })
     const hour = faker.number.int({ min: 0, max: 23 })
     const minute = faker.number.int({ min: 0, max: 59 })
@@ -90,7 +91,7 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
       id: `txn_${counter++}`,
       accountId,
       type,
-      amount: { amount, currency: 'USD' },
+      amount: { amount, currency: 'NGN' },
       category,
       merchant,
       description: description ?? merchant,
@@ -221,9 +222,9 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
       name: def.name,
       type: def.type,
       number: maskNumber(def.last4),
-      balance: { amount: balance, currency: 'USD' },
-      availableBalance: { amount: balance, currency: 'USD' },
-      currency: 'USD',
+      balance: { amount: balance, currency: 'NGN' },
+      availableBalance: { amount: balance, currency: 'NGN' },
+      currency: 'NGN',
       status: 'active',
       createdAt: `2024-0${index + 1}-05T12:00:00.000Z`,
     }

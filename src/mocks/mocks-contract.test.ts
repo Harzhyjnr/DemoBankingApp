@@ -47,7 +47,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
       id: 'usr_demo',
       firstName: expect.any(String),
       lastName: expect.any(String),
-      preferredCurrency: 'USD',
+      preferredCurrency: 'NGN',
     })
   })
 
@@ -115,7 +115,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
         name: expect.any(String),
         type: expect.any(String),
         number: expect.stringContaining('•'),
-        currency: 'USD',
+        currency: 'NGN',
       })
     }
   })
@@ -162,7 +162,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
         id: expect.any(String),
         accountId: expect.any(String),
         date: expect.any(String),
-        amount: { currency: 'USD' },
+        amount: { currency: 'NGN' },
       })
       expect(Number.isInteger(txn.amount.amount)).toBe(true)
     }
@@ -178,7 +178,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
     const result = await apiClient<TransferResult>('/transfers', {
       method: 'POST',
       body: JSON.stringify({
-        amount: { amount, currency: 'USD' },
+        amount: { amount, currency: 'NGN' },
         fromAccountId: fromId,
         toAccountId: toId,
       }),
@@ -199,7 +199,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
     await loginAsDemo()
     const { accounts } = await apiClient<{ accounts: Account[] }>('/accounts')
     const body = (fromAccountId: string, toAccountId: string, amount: number) =>
-      JSON.stringify({ amount: { amount, currency: 'USD' }, fromAccountId, toAccountId })
+      JSON.stringify({ amount: { amount, currency: 'NGN' }, fromAccountId, toAccountId })
 
     await expect(
       apiClient('/transfers', {
@@ -240,7 +240,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
     expect(insights.topMerchants.length).toBeGreaterThan(0)
     for (const bucket of insights.byCategory) {
       expect(bucket.amount).toBeGreaterThan(0)
-      expect(bucket.currency).toBe('USD')
+      expect(bucket.currency).toBe('NGN')
       expect(bucket.category).toEqual(expect.any(String))
     }
   })

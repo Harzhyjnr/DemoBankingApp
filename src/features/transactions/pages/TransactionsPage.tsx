@@ -91,7 +91,10 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Transactions" description="Search and filter all of your transactions." />
+      <PageHeader
+        title="Transactions"
+        description="Search and filter every movement, in naira and coin."
+      />
 
       <Card>
         <CardContent className="space-y-4 py-4">

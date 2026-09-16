@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Send } from 'lucide-react'
 
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -72,22 +72,35 @@ export default function AccountDetailPage() {
       </PageHeader>
 
       <section aria-label="Account balance">
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-8 py-6">
+        <div className="card-crypto relative overflow-hidden bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-cyan-500/10 p-6 md:p-8">
+          <div aria-hidden="true" className="absolute inset-0 bg-grid opacity-40 bg-radial-fade" />
+          <div
+            aria-hidden="true"
+            className="absolute -top-16 -right-16 size-56 rounded-full bg-emerald-400/20 blur-3xl"
+          />
+          <div className="relative flex flex-wrap items-center gap-8">
             <div>
               <p className="text-sm text-muted-foreground">Balance</p>
-              <p className="text-3xl font-semibold tabular-nums">
+              <p className="mt-1 font-display text-4xl font-bold tabular-nums md:text-5xl">
                 <Money amount={account.balance.amount} currency={account.currency} />
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Available balance</p>
-              <p className="text-2xl font-medium tabular-nums">
+              <p className="mt-1 text-2xl font-semibold tabular-nums">
                 <Money amount={account.availableBalance.amount} currency={account.currency} />
               </p>
             </div>
-          </CardContent>
-        </Card>
+            <span className="ml-auto">
+              <Button asChild>
+                <Link to={`/transfers?from=${account.id}`}>
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  Transfer
+                </Link>
+              </Button>
+            </span>
+          </div>
+        </div>
       </section>
 
       <section aria-label="Transactions" className="space-y-3">

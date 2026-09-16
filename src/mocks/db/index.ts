@@ -12,7 +12,7 @@ import type {
   User,
 } from '@/lib/api/types'
 
-const CURRENCIES: Currency[] = ['USD', 'EUR', 'GBP']
+const CURRENCIES: Currency[] = ['NGN', 'USD', 'EUR', 'GBP']
 
 interface TransferInput {
   fromAccountId: string
@@ -84,7 +84,7 @@ export const db = {
       lastName: input.lastName,
       email: input.email,
       password: input.password,
-      preferredCurrency: 'USD',
+      preferredCurrency: 'NGN',
       createdAt: new Date().toISOString(),
     }
     users.push(record)
@@ -254,17 +254,17 @@ export const db = {
 
     return {
       byCategory: [...byCategory.entries()]
-        .map(([category, amount]) => ({ category, amount, currency: 'USD' as Currency }))
+        .map(([category, amount]) => ({ category, amount, currency: 'NGN' as Currency }))
         .sort((a, b) => b.amount - a.amount),
       monthly: [...monthly.entries()]
-        .map(([month, amount]) => ({ month, amount, currency: 'USD' as Currency }))
+        .map(([month, amount]) => ({ month, amount, currency: 'NGN' as Currency }))
         .sort((a, b) => a.month.localeCompare(b.month)),
       topMerchants: [...topMerchants.entries()]
         .map(([merchant, stats]) => ({
           merchant,
           amount: stats.amount,
           count: stats.count,
-          currency: 'USD' as Currency,
+          currency: 'NGN' as Currency,
         }))
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),

@@ -4,16 +4,16 @@ import { formatMoney, toMinorUnits } from '@/lib/money'
 import { Money } from '@/components/shared/Money'
 
 describe('formatMoney', () => {
-  it('formats minor units as USD currency by default', () => {
-    expect(formatMoney(123456)).toBe('$1,234.56')
+  it('formats minor units as NGN currency by default', () => {
+    expect(formatMoney(123456)).toBe('₦1,234.56')
   })
 
   it('formats zero', () => {
-    expect(formatMoney(0)).toBe('$0.00')
+    expect(formatMoney(0)).toBe('₦0.00')
   })
 
   it('formats negative amounts', () => {
-    expect(formatMoney(-2500)).toBe('-$25.00')
+    expect(formatMoney(-2500)).toBe('-₦25.00')
   })
 
   it('formats with a different currency (EUR)', () => {
@@ -36,6 +36,6 @@ describe('toMinorUnits', () => {
 describe('Money component', () => {
   it('renders formatted money', () => {
     render(<Money amount={123456} />)
-    expect(screen.getByTestId('money')).toHaveTextContent('$1,234.56')
+    expect(screen.getByTestId('money')).toHaveTextContent('₦1,234.56')
   })
 })

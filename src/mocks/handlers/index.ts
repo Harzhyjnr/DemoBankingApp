@@ -5,6 +5,7 @@ import { transferHandlers } from '@/mocks/handlers/transfers'
 import { cardHandlers } from '@/mocks/handlers/cards'
 import { insightHandlers } from '@/mocks/handlers/insights'
 import { settingHandlers } from '@/mocks/handlers/settings'
+import { marketHandlers } from '@/mocks/handlers/market'
 
 export const handlers = [
   ...authHandlers,
@@ -14,4 +15,5 @@ export const handlers = [
   ...cardHandlers,
   ...insightHandlers,
   ...settingHandlers,
+  ...marketHandlers,
 ]
