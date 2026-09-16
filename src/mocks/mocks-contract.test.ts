@@ -5,6 +5,7 @@ import type {
   Account,
   AuthResponse,
   Card,
+  RecentTransfersResponse,
   SpendingInsights,
   TransferResult,
   Transaction,
@@ -181,6 +182,7 @@ describe('MSW contract: endpoints return the documented shape', () => {
         amount: { amount, currency: 'NGN' },
         fromAccountId: fromId,
         toAccountId: toId,
+        pin: '1234',
       }),
     })
     expect(result.debit.accountId).toBe(fromId)
@@ -193,6 +195,46 @@ describe('MSW contract: endpoints return the documented shape', () => {
     const toAfter = after.accounts.find((account) => account.id === toId)!
     expect(fromAfter.balance.amount).toBe(accounts[0].balance.amount - amount)
     expect(toAfter.balance.amount).toBe(accounts[2].balance.amount + amount)
+  })
+
+  it('POST /transfers rejects an incorrect PIN', async () => {
+    await loginAsDemo()
+    const { accounts } = await apiClient<{ accounts: Account[] }>('/accounts')
+
+    await expect(
+      apiClient('/transfers', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: { amount: 1_000, currency: 'NGN' },
+          fromAccountId: accounts[0].id,
+          toAccountId: accounts[2].id,
+          pin: '0000',
+        }),
+      }),
+    ).rejects.toMatchObject({ status: 400, code: 'INVALID_PIN' })
+  })
+
+  it('GET /transfers/recent returns recent transfers and recipients', async () => {
+    await loginAsDemo()
+    const recent = await apiClient<RecentTransfersResponse>('/transfers/recent')
+    expect(recent.transfers.length).toBeGreaterThan(0)
+    expect(recent.recipients.length).toBeGreaterThan(0)
+    for (const transfer of recent.transfers) {
+      expect(transfer).toMatchObject({
+        id: expect.any(String),
+        reference: expect.any(String),
+        fromAccountId: expect.any(String),
+        toAccountId: expect.any(String),
+        amount: { currency: 'NGN' },
+      })
+    }
+    for (const recipient of recent.recipients) {
+      expect(recipient).toMatchObject({
+        accountId: expect.any(String),
+        accountName: expect.any(String),
+        transferCount: expect.any(Number),
+      })
+    }
   })
 
   it('POST /transfers rejects invalid amounts and insufficient funds', async () => {

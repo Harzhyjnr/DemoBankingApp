@@ -3,11 +3,14 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Children, isValidElement, type ReactNode } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { TransferForm } from '@/features/transfers/components/TransferForm'
 import { queryClient } from '@/app/queryClient'
 import { db } from '@/mocks/db'
 import { saveToken } from '@/lib/auth/token'
 import { formatMoney } from '@/lib/money'
+
+expect.extend(toHaveNoViolations)
 
 vi.mock('@/components/ui/select', () => {
   function findTriggerProps(children: unknown): Record<string, unknown> | null {
@@ -79,6 +82,10 @@ function enterAmount(value: string) {
   fireEvent.change(screen.getByLabelText('Amount'), { target: { value } })
 }
 
+function enterPin(value: string) {
+  fireEvent.change(screen.getByLabelText('Confirm with your 4-digit PIN'), { target: { value } })
+}
+
 beforeEach(() => {
   queryClient.clear()
   saveToken(db.issueToken('usr_demo'))
@@ -97,6 +104,12 @@ async function clickReview(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('TransferForm', () => {
+  it('has no accessibility violations on the initial step', async () => {
+    const { container } = renderForm()
+    await screen.findByRole('combobox', { name: 'Source account' })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
   it('shows validation errors when required fields are empty', async () => {
     const user = await renderReady()
     await clickReview(user)
@@ -133,6 +146,21 @@ describe('TransferForm', () => {
     ).toBeInTheDocument()
   })
 
+  it('rejects zero and sanitizes negative input', async () => {
+    const user = await renderReady()
+
+    selectSource('acc_checking')
+    selectDestination('acc_spending')
+    enterAmount('0')
+    await clickReview(user)
+    expect(await screen.findByText('Enter an amount greater than zero.')).toBeInTheDocument()
+
+    enterAmount('-50')
+    expect(screen.getByLabelText('Amount')).toHaveValue('50')
+    await clickReview(user)
+    expect(await screen.findByText('Review transfer')).toBeInTheDocument()
+  })
+
   it('completes a transfer and shows the success screen', async () => {
     const user = await renderReady()
 
@@ -151,6 +179,72 @@ describe('TransferForm', () => {
       screen.getByText(formatMoney(100_00, { currency: checking.currency })),
     ).toBeInTheDocument()
 
+    enterPin('1234')
+    await user.click(screen.getByRole('button', { name: /Confirm transfer/ }))
+
+    expect(await screen.findByText('Transfer complete')).toBeInTheDocument()
+  })
+
+  it('shows recent recipients and transfers on the success screen', async () => {
+    const user = await renderReady()
+
+    selectSource('acc_checking')
+    selectDestination('acc_spending')
+    enterAmount('100')
+    await clickReview(user)
+    enterPin('1234')
+    await user.click(screen.getByRole('button', { name: /Confirm transfer/ }))
+
+    expect(await screen.findByText('Transfer complete')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Recent recipients' })).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('button', { name: /Naija Everyday|Spend Account/ }).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Recent transfers' })).toBeInTheDocument()
+  })
+
+  it('requires a 4-digit PIN before confirming', async () => {
+    const user = await renderReady()
+
+    selectSource('acc_checking')
+    selectDestination('acc_spending')
+    enterAmount('50')
+    await clickReview(user)
+
+    await user.click(screen.getByRole('button', { name: /Confirm transfer/ }))
+    expect(await screen.findByText('Enter your 4-digit PIN.')).toBeInTheDocument()
+  })
+
+  it('surfaces an incorrect PIN error from the server', async () => {
+    const user = await renderReady()
+
+    selectSource('acc_checking')
+    selectDestination('acc_spending')
+    enterAmount('50')
+    await clickReview(user)
+
+    enterPin('9999')
+    await user.click(screen.getByRole('button', { name: /Confirm transfer/ }))
+
+    expect(await screen.findByText('Incorrect PIN. Please try again.')).toBeInTheDocument()
+  })
+
+  it('lets insufficient funds error be corrected', async () => {
+    const user = await renderReady()
+
+    const checking = db.getAccountForUser('usr_demo', 'acc_checking')!
+    selectSource('acc_checking')
+    selectDestination('acc_spending')
+    enterAmount((checking.balance.amount / 100 + 1000).toFixed(2))
+    await clickReview(user)
+
+    expect(
+      await screen.findByText('Amount exceeds the available balance of the source account.'),
+    ).toBeInTheDocument()
+
+    enterAmount('100')
+    await clickReview(user)
+    enterPin('1234')
     await user.click(screen.getByRole('button', { name: /Confirm transfer/ }))
 
     expect(await screen.findByText('Transfer complete')).toBeInTheDocument()

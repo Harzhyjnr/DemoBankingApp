@@ -1,8 +1,18 @@
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Landmark, Loader2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Clock,
+  Landmark,
+  Loader2,
+  UserPlus,
+} from 'lucide-react'
 
-import { Money } from '@/components/shared/Money'
+import { AmountInput } from '@/components/shared/AmountInput'
 import { FieldError } from '@/components/shared/FieldError'
+import { Money } from '@/components/shared/Money'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,9 +24,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAccounts } from '@/features/accounts/api'
-import { useCreateTransfer } from '@/features/transfers/api'
+import { useCreateTransfer, useRecentTransfers } from '@/features/transfers/api'
 import { toMinorUnits, formatMoney } from '@/lib/money'
-import type { Account } from '@/lib/api/types'
+import type { Account, TransferRecipient } from '@/lib/api/types'
 
 interface TransferFormProps {
   defaultFromAccountId?: string
@@ -55,6 +65,7 @@ function parseAmount(raw: string): number {
 export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormProps) {
   const accountsQuery = useAccounts()
   const transferMutation = useCreateTransfer()
+  const recentQuery = useRecentTransfers()
 
   const [step, setStep] = useState<Step>('details')
   const [form, setForm] = useState<FormState>(() =>
@@ -62,9 +73,12 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
   )
   const [review, setReview] = useState<ReviewValues | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [pin, setPin] = useState('')
+  const [pinError, setPinError] = useState<string | null>(null)
 
   const accounts = accountsQuery.data ?? []
   const currency = accounts[0]?.currency ?? 'NGN'
+  const recent = recentQuery.data
 
   function selectAccount(id: string, field: 'fromAccountId' | 'toAccountId') {
     setForm((current) => ({
@@ -107,17 +121,29 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
 
   function backToDetails() {
     setErrors({})
+    setPin('')
+    setPinError(null)
     setStep('details')
+  }
+
+  function selectRecipient(recipient: TransferRecipient) {
+    setForm((current) => ({ ...current, toAccountId: recipient.accountId }))
   }
 
   function submit() {
     if (!review) return
+    if (!/^\d{4}$/.test(pin)) {
+      setPinError('Enter your 4-digit PIN.')
+      return
+    }
+    setPinError(null)
     transferMutation.mutate(
       {
         fromAccountId: review.fromAccount!.id,
         toAccountId: review.toAccount!.id,
         amount: { amount: review.amountMinor, currency },
         description: review.description || undefined,
+        pin,
       },
       {
         onSuccess: () => setStep('done'),
@@ -126,19 +152,90 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
   }
 
   if (step === 'done' && review) {
+    const recents = recent?.transfers.slice(0, 3) ?? []
+    const recipients = recent?.recipients.slice(0, 3) ?? []
     return (
-      <div className="space-y-6 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40">
-          <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
+      <div className="space-y-8">
+        <div className="space-y-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40">
+            <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Transfer complete</h2>
+            <p className="text-muted-foreground">
+              {formatMoney(review.amountMinor, { currency })} moved from {review.fromAccount?.name}{' '}
+              to {review.toAccount?.name}.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+            <Button onClick={() => setStep('details')}>Send another transfer</Button>
+            {onCancel ? (
+              <Button variant="ghost" onClick={onCancel}>
+                Done
+              </Button>
+            ) : null}
+          </div>
         </div>
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Transfer complete</h2>
-          <p className="text-muted-foreground">
-            {formatMoney(review.amountMinor, { currency })} moved from {review.fromAccount?.name} to{' '}
-            {review.toAccount?.name}.
-          </p>
-        </div>
-        <Button onClick={() => setStep('details')}>Send another transfer</Button>
+
+        {recipients.length > 0 ? (
+          <section aria-label="Recent recipients" className="space-y-3">
+            <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+              <UserPlus className="size-4 text-muted-foreground" aria-hidden="true" />
+              Recent recipients
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {recipients.map((recipient) => (
+                <Button
+                  key={recipient.accountId}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    selectRecipient(recipient)
+                    setStep('details')
+                  }}
+                >
+                  {recipient.accountName}
+                </Button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section aria-label="Recent transfers" className="space-y-3">
+          <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+            <Clock className="size-4 text-muted-foreground" aria-hidden="true" />
+            Recent transfers
+          </h3>
+          {recents.length > 0 ? (
+            <dl className="divide-y overflow-hidden rounded-2xl border border-border/60 bg-muted/40">
+              {recents.map((transfer) => (
+                <div
+                  key={transfer.id}
+                  className="flex items-center justify-between gap-4 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <dt className="truncate text-sm font-medium tabular-nums">
+                      <Money amount={transfer.amount.amount} currency={transfer.amount.currency} />
+                    </dt>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {new Date(transfer.date).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </p>
+                  </div>
+                  <dd className="shrink-0 text-xs text-muted-foreground">
+                    To{' '}
+                    {accounts.find((account) => account.id === transfer.toAccountId)?.name ??
+                      transfer.toAccountId}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">No recent transfers yet.</p>
+          )}
+        </section>
       </div>
     )
   }
@@ -175,6 +272,25 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
             </div>
           ) : null}
         </dl>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="transfer-pin">Confirm with your 4-digit PIN</Label>
+          <Input
+            id="transfer-pin"
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={4}
+            placeholder="••••"
+            value={pin}
+            aria-invalid={pinError ? true : undefined}
+            onChange={(event) => {
+              setPin(event.target.value.replace(/\D/g, '').slice(0, 4))
+            }}
+          />
+          <p className="text-xs text-muted-foreground">Demo PIN: 1234</p>
+          <FieldError>{pinError}</FieldError>
+        </div>
 
         {transferMutation.isError && (
           <p className="text-sm font-medium text-destructive" role="alert">
@@ -250,18 +366,14 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="transfer-amount">Amount</Label>
-        <Input
-          id="transfer-amount"
-          type="text"
-          inputMode="decimal"
-          placeholder="0.00"
-          value={form.amount}
-          onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
-        />
-        <FieldError>{errors.amount}</FieldError>
-      </div>
+      <AmountInput
+        id="transfer-amount"
+        label="Amount"
+        value={form.amount}
+        onValueChange={(value) => setForm((current) => ({ ...current, amount: value }))}
+        currency={currency}
+        error={errors.amount}
+      />
 
       <div className="space-y-1.5">
         <Label htmlFor="transfer-description">Note (optional)</Label>

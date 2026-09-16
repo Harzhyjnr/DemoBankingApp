@@ -9,6 +9,7 @@ export interface MockUserRecord {
   lastName: string
   email: string
   password: string
+  pin: string
   preferredCurrency: 'NGN' | 'USD' | 'EUR' | 'GBP'
   createdAt: string
 }
@@ -62,6 +63,7 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
     lastName: 'Okafor',
     email: 'demo@bank.com',
     password: 'demo1234',
+    pin: '1234',
     preferredCurrency: 'NGN',
     createdAt: '2024-01-15T08:00:00.000Z',
   }
@@ -100,6 +102,45 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
       ...(type === 'transfer'
         ? { reference: `TRF-${faker.string.alphanumeric(8).toUpperCase()}` }
         : {}),
+    })
+  }
+
+  const pushTransferPair = (
+    fromAccountId: string,
+    toAccountId: string,
+    absAmount: number,
+    base: Date,
+  ) => {
+    const scaled = Math.round(absAmount * 100)
+    const reference = `TRF-${faker.string.alphanumeric(8).toUpperCase()}`
+    const day = faker.number.int({ min: 1, max: 28 })
+    const hour = faker.number.int({ min: 0, max: 23 })
+    const minute = faker.number.int({ min: 0, max: 59 })
+    const date = new Date(base.getFullYear(), base.getMonth(), day, hour, minute).toISOString()
+
+    transactions.push({
+      id: `txn_${counter++}`,
+      accountId: fromAccountId,
+      type: 'transfer',
+      amount: { amount: -scaled, currency: 'NGN' },
+      category: 'Transfer',
+      merchant: 'Internal Transfer',
+      description: 'Internal transfer',
+      date,
+      status: 'completed',
+      reference,
+    })
+    transactions.push({
+      id: `txn_${counter++}`,
+      accountId: toAccountId,
+      type: 'transfer',
+      amount: { amount: scaled, currency: 'NGN' },
+      category: 'Transfer',
+      merchant: 'Internal Transfer',
+      description: 'Internal transfer',
+      date,
+      status: 'completed',
+      reference,
     })
   }
 
@@ -147,25 +188,18 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
         base,
       )
     }
-    pushTxn(
-      'acc_spending',
-      'transfer',
-      'Transfer',
-      'Internal Transfer',
-      pick(TRANSFER_OPTIONS).amount,
-      base,
-    )
 
-    const savingsCount = faker.number.int({ min: 2, max: 4 })
-    for (let i = 0; i < savingsCount; i++) {
-      pushTxn(
-        'acc_savings',
-        'transfer',
-        'Transfer',
-        'Internal Transfer',
-        faker.number.int({ min: 10_000, max: 80_000 }),
-        base,
-      )
+    if (offset < 3) {
+      pushTransferPair('acc_checking', 'acc_spending', pick(TRANSFER_OPTIONS).amount, base)
+      const savingsCount = faker.number.int({ min: 1, max: 2 })
+      for (let i = 0; i < savingsCount; i++) {
+        pushTransferPair(
+          'acc_checking',
+          'acc_savings',
+          faker.number.int({ min: 10_000, max: 40_000 }),
+          base,
+        )
+      }
     }
     pushTxn(
       'acc_savings',

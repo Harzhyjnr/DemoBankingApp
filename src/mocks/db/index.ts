@@ -6,8 +6,11 @@ import type {
   Currency,
   Paginated,
   PaginationParams,
+  RecentTransfer,
+  RecentTransfersResponse,
   SpendingInsights,
   Transaction,
+  TransferRecipient,
   TransferResult,
   User,
 } from '@/lib/api/types'
@@ -84,6 +87,7 @@ export const db = {
       lastName: input.lastName,
       email: input.email,
       password: input.password,
+      pin: '1234',
       preferredCurrency: 'NGN',
       createdAt: new Date().toISOString(),
     }
@@ -207,6 +211,75 @@ export const db = {
     }
 
     return { debit, credit }
+  },
+
+  getRecentTransfers(userId: string, limit = 5): RecentTransfer[] {
+    const accountIds = this.getUserAccountIds(userId)
+    const transfersByReference = new Map<string, Transaction[]>()
+    for (const txn of transactions) {
+      if (!accountIds.includes(txn.accountId) || txn.type !== 'transfer' || !txn.reference) {
+        continue
+      }
+      const group = transfersByReference.get(txn.reference) ?? []
+      group.push(txn)
+      transfersByReference.set(txn.reference, group)
+    }
+
+    const recents: RecentTransfer[] = []
+    for (const [reference, group] of transfersByReference) {
+      const debit = group.find((txn) => txn.amount.amount < 0)
+      const credit = group.find((txn) => txn.amount.amount > 0)
+      if (!debit || !credit) continue
+      recents.push({
+        id: debit.id,
+        reference,
+        fromAccountId: debit.accountId,
+        toAccountId: credit.accountId,
+        amount: { amount: Math.abs(debit.amount.amount), currency: debit.amount.currency },
+        description: debit.description,
+        date: debit.date,
+      })
+    }
+    return recents.sort((a, b) => b.date.localeCompare(a.date)).slice(0, Math.max(limit, 1))
+  },
+
+  getRecentRecipients(userId: string, limit = 4): TransferRecipient[] {
+    const accountIds = this.getUserAccountIds(userId)
+    const receivedByAccount = new Map<string, { lastTransferAt: string; transferCount: number }>()
+    for (const txn of transactions) {
+      if (
+        !accountIds.includes(txn.accountId) ||
+        txn.type !== 'transfer' ||
+        txn.amount.amount <= 0
+      ) {
+        continue
+      }
+      const current = receivedByAccount.get(txn.accountId) ?? {
+        lastTransferAt: txn.date,
+        transferCount: 0,
+      }
+      if (txn.date > current.lastTransferAt) current.lastTransferAt = txn.date
+      current.transferCount += 1
+      receivedByAccount.set(txn.accountId, current)
+    }
+
+    const accountNameById = new Map(accounts.map((account) => [account.id, account.name]))
+    return [...receivedByAccount.entries()]
+      .map(([accountId, stats]) => ({
+        accountId,
+        accountName: accountNameById.get(accountId) ?? accountId,
+        lastTransferAt: stats.lastTransferAt,
+        transferCount: stats.transferCount,
+      }))
+      .sort((a, b) => b.lastTransferAt.localeCompare(a.lastTransferAt))
+      .slice(0, Math.max(limit, 1))
+  },
+
+  getRecentTransfersResponse(userId: string): RecentTransfersResponse {
+    return {
+      transfers: this.getRecentTransfers(userId, 5),
+      recipients: this.getRecentRecipients(userId, 4),
+    }
   },
 
   getCardsForUser(userId: string): Card[] {

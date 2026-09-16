@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Children, isValidElement, type ReactNode } from 'react'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -7,6 +8,52 @@ import TransactionsPage from '@/features/transactions/pages/TransactionsPage'
 import { queryClient } from '@/app/queryClient'
 import { db } from '@/mocks/db'
 import { saveToken } from '@/lib/auth/token'
+
+vi.mock('@/components/ui/select', () => {
+  function findTriggerProps(children: unknown): Record<string, unknown> | null {
+    for (const child of Children.toArray(children as ReactNode)) {
+      if (isValidElement<{ 'aria-label'?: unknown; id?: unknown; children?: unknown }>(child)) {
+        const props = child.props
+        if (props['aria-label'] || props.id) return props
+        const nested = findTriggerProps(props.children)
+        if (nested) return nested
+      }
+    }
+    return null
+  }
+
+  const Select = ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value?: string
+    onValueChange: (value: string) => void
+    children: ReactNode
+  }) => {
+    const triggerProps = findTriggerProps(children) ?? {}
+    return (
+      <select
+        data-testid="mock-select"
+        value={value ?? ''}
+        onChange={(event) => onValueChange(event.target.value)}
+        aria-label={(triggerProps['aria-label'] as string) ?? undefined}
+        id={(triggerProps.id as string) ?? undefined}
+      >
+        {children}
+      </select>
+    )
+  }
+
+  const SelectTrigger = ({ children }: { children: ReactNode }) => <>{children}</>
+  const SelectValue = () => null
+  const SelectContent = ({ children }: { children: ReactNode }) => <>{children}</>
+  const SelectItem = ({ value, children }: { value: string; children: ReactNode }) => (
+    <option value={value}>{children}</option>
+  )
+
+  return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem }
+})
 
 const PAGE_SIZE = 25
 
@@ -18,14 +65,6 @@ function renderPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   )
-}
-
-function openTrigger(el: HTMLElement) {
-  fireEvent.pointerDown(el, { pointerId: 1, pointerType: 'mouse', button: 0 })
-  fireEvent.mouseDown(el, { button: 0 })
-  fireEvent.pointerUp(el, { pointerId: 1, pointerType: 'mouse', button: 0 })
-  fireEvent.mouseUp(el, { button: 0 })
-  fireEvent.click(el)
 }
 
 async function bodyRows(): Promise<HTMLElement[]> {
@@ -82,8 +121,9 @@ describe('TransactionsPage', () => {
     renderPage()
     await waitForResults(db.getAllTransactions('usr_demo', { page: 1 }).total)
 
-    openTrigger(screen.getByRole('combobox', { name: 'Filter by type' }))
-    fireEvent.click(await screen.findByRole('option', { name: 'transfer' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by type' }), {
+      target: { value: 'transfer' },
+    })
 
     const expected = db
       .getAllTransactions('usr_demo', { type: 'transfer', page: 1, limit: PAGE_SIZE })
@@ -102,8 +142,9 @@ describe('TransactionsPage', () => {
     renderPage()
     await waitForResults(db.getAllTransactions('usr_demo', { page: 1 }).total)
 
-    openTrigger(screen.getByRole('combobox', { name: 'Filter by category' }))
-    fireEvent.click(await screen.findByRole('option', { name: 'Rent' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by category' }), {
+      target: { value: 'Rent' },
+    })
 
     await waitForResults(
       db.getAllTransactions('usr_demo', { category: 'Rent', page: 1, limit: PAGE_SIZE }).total,
@@ -135,8 +176,9 @@ describe('TransactionsPage', () => {
     renderPage()
     await waitForResults(db.getAllTransactions('usr_demo', { page: 1 }).total)
 
-    openTrigger(screen.getByRole('combobox', { name: 'Filter by type' }))
-    fireEvent.click(await screen.findByRole('option', { name: 'credit' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by type' }), {
+      target: { value: 'credit' },
+    })
     await waitForResults(
       db.getAllTransactions('usr_demo', { type: 'credit', page: 1, limit: PAGE_SIZE }).total,
     )

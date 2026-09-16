@@ -94,11 +94,35 @@ export interface TransferRequest {
   fromAccountId: string
   toAccountId: string
   description?: string
+  /** 4-digit confirmation PIN. */
+  pin: string
 }
 
 export interface TransferResult {
   debit: Transaction
   credit: Transaction
+}
+
+export interface RecentTransfer {
+  id: string
+  reference: string
+  fromAccountId: string
+  toAccountId: string
+  amount: Money
+  description: string
+  date: string
+}
+
+export interface TransferRecipient {
+  accountId: string
+  accountName: string
+  lastTransferAt: string
+  transferCount: number
+}
+
+export interface RecentTransfersResponse {
+  transfers: RecentTransfer[]
+  recipients: TransferRecipient[]
 }
 
 export type CardBrand = 'Visa' | 'Mastercard'

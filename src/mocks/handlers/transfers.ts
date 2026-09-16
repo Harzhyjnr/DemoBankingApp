@@ -8,9 +8,29 @@ interface TransferBody {
   fromAccountId?: unknown
   toAccountId?: unknown
   description?: unknown
+  pin?: unknown
+}
+
+type ValidationResult = ReturnType<typeof badRequest> | null
+
+function validatePin(body: TransferBody, request: Request): ValidationResult {
+  if (typeof body.pin === 'string' && body.pin.trim()) {
+    const userId = db.requireAuth(request)
+    const record = userId ? db.findUserById(userId) : null
+    if (!record || body.pin !== record.pin) {
+      return badRequest('INVALID_PIN', 'Incorrect PIN. Please try again.')
+    }
+  }
+  return null
 }
 
 export const transferHandlers = [
+  http.get('*/api/transfers/recent', ({ request }) => {
+    const userId = db.requireAuth(request)
+    if (!userId) return unauthorized()
+    return HttpResponse.json(db.getRecentTransfersResponse(userId))
+  }),
+
   http.post('*/api/transfers', async ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
@@ -21,6 +41,9 @@ export const transferHandlers = [
     } catch {
       return badRequest('INVALID_REQUEST', 'Malformed request body.')
     }
+
+    const pinError = validatePin(body, request)
+    if (pinError) return pinError
 
     const amount = body.amount as Money | undefined
     const fromAccountId = typeof body.fromAccountId === 'string' ? body.fromAccountId : ''
