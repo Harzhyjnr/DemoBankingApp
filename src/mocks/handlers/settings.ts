@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { badRequest, unauthorized } from '@/mocks/handlers/http'
 import type { Currency, NotificationPreferences } from '@/lib/api/types'
+import { apiPattern } from '@/lib/api/base'
 
 interface ProfilePatchBody {
   firstName?: unknown
@@ -16,7 +17,7 @@ interface NotificationPrefsBody {
 }
 
 export const settingHandlers = [
-  http.patch('*/api/settings/profile', async ({ request }) => {
+  http.patch(apiPattern('/settings/profile'), async ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 
@@ -43,19 +44,19 @@ export const settingHandlers = [
     return HttpResponse.json({ user })
   }),
 
-  http.patch('*/api/settings/security', ({ request }) => {
+  http.patch(apiPattern('/settings/security'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json({ ok: true })
   }),
 
-  http.get('*/api/settings/notifications', ({ request }) => {
+  http.get(apiPattern('/settings/notifications'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json(db.getNotificationPreferences(userId))
   }),
 
-  http.patch('*/api/settings/notifications', async ({ request }) => {
+  http.patch(apiPattern('/settings/notifications'), async ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 

@@ -1,7 +1,6 @@
 import { ApiError } from '@/lib/api/errors'
+import { apiUrl } from '@/lib/api/base'
 import { getToken } from '@/lib/auth/token'
-
-const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL ?? '/api'
 
 export interface ApiClientOptions extends RequestInit {
   query?: Record<string, string | number | boolean | undefined>
@@ -11,8 +10,7 @@ export async function apiClient<T>(path: string, options: ApiClientOptions = {})
   const { query, headers, ...rest } = options
 
   const url = new URL(
-    `${API_BASE_URL}${path}`,
-    typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+    apiUrl(path, typeof window === 'undefined' ? 'http://localhost' : window.location.origin),
   )
 
   if (query) {

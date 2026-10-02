@@ -2,15 +2,16 @@ import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { market } from '@/mocks/db/crypto'
 import { unauthorized } from '@/mocks/handlers/http'
+import { apiPattern } from '@/lib/api/base'
 
 export const marketHandlers = [
-  http.get('*/api/market', ({ request }) => {
+  http.get(apiPattern('/market'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json({ prices: market.getPrices() })
   }),
 
-  http.get('*/api/portfolio', ({ request }) => {
+  http.get(apiPattern('/portfolio'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 

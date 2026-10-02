@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
+import { apiPattern } from '@/lib/api/base'
 
 interface LoginBody {
   email?: unknown
@@ -18,7 +19,7 @@ interface RegisterBody {
 const IDENTIFIER_REGEX = /^\d{11}$/
 
 export const authHandlers = [
-  http.post('*/api/auth/login', async ({ request }) => {
+  http.post(apiPattern('/auth/login'), async ({ request }) => {
     let body: LoginBody = {}
     try {
       body = (await request.json()) as LoginBody
@@ -43,7 +44,7 @@ export const authHandlers = [
     return HttpResponse.json({ token: db.issueToken(record.id), user: db.toPublicUser(record) })
   }),
 
-  http.post('*/api/auth/register', async ({ request }) => {
+  http.post(apiPattern('/auth/register'), async ({ request }) => {
     let body: RegisterBody = {}
     try {
       body = (await request.json()) as RegisterBody
@@ -118,11 +119,11 @@ export const authHandlers = [
     )
   }),
 
-  http.post('*/api/auth/logout', () => {
+  http.post(apiPattern('/auth/logout'), () => {
     return new HttpResponse(null, { status: 204 })
   }),
 
-  http.get('*/api/me', ({ request }) => {
+  http.get(apiPattern('/me'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) {
       return HttpResponse.json(
@@ -150,7 +151,7 @@ export const authHandlers = [
     return HttpResponse.json({ user: db.toPublicUser(record) })
   }),
 
-  http.get('*/api/users/:id', ({ params }) => {
+  http.get(apiPattern('/users/:id'), ({ params }) => {
     const id = String(params.id)
     const record = db.findUserById(id)
     if (!record) {

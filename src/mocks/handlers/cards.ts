@@ -1,15 +1,16 @@
 import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { notFound, unauthorized } from '@/mocks/handlers/http'
+import { apiPattern } from '@/lib/api/base'
 
 export const cardHandlers = [
-  http.get('*/api/cards', ({ request }) => {
+  http.get(apiPattern('/cards'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json({ cards: db.getCardsForUser(userId) })
   }),
 
-  http.post('*/api/cards/:id/freeze', ({ request, params }) => {
+  http.post(apiPattern('/cards/:id/freeze'), ({ request, params }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 
@@ -20,7 +21,7 @@ export const cardHandlers = [
     return HttpResponse.json({ card })
   }),
 
-  http.post('*/api/cards/:id/unfreeze', ({ request, params }) => {
+  http.post(apiPattern('/cards/:id/unfreeze'), ({ request, params }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 

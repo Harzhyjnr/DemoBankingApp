@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { badRequest, notFound, unauthorized } from '@/mocks/handlers/http'
 import type { Currency, Money } from '@/lib/api/types'
+import { apiPattern } from '@/lib/api/base'
 
 interface TransferBody {
   amount?: unknown
@@ -25,13 +26,13 @@ function validatePin(body: TransferBody, request: Request): ValidationResult {
 }
 
 export const transferHandlers = [
-  http.get('*/api/transfers/recent', ({ request }) => {
+  http.get(apiPattern('/transfers/recent'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json(db.getRecentTransfersResponse(userId))
   }),
 
-  http.post('*/api/transfers', async ({ request }) => {
+  http.post(apiPattern('/transfers'), async ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 

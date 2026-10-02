@@ -1,15 +1,16 @@
 import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { notFound, readPagination, unauthorized } from '@/mocks/handlers/http'
+import { apiPattern } from '@/lib/api/base'
 
 export const accountHandlers = [
-  http.get('*/api/accounts', ({ request }) => {
+  http.get(apiPattern('/accounts'), ({ request }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json({ accounts: db.getUserAccounts(userId) })
   }),
 
-  http.get('*/api/accounts/:id', ({ request, params }) => {
+  http.get(apiPattern('/accounts/:id'), ({ request, params }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 
@@ -18,7 +19,7 @@ export const accountHandlers = [
     return HttpResponse.json({ account })
   }),
 
-  http.get('*/api/accounts/:id/transactions', ({ request, params }) => {
+  http.get(apiPattern('/accounts/:id/transactions'), ({ request, params }) => {
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
 
