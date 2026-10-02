@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { Filter, RotateCcw, SearchCheck } from 'lucide-react'
 
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -22,6 +22,7 @@ import { useAccounts } from '@/features/accounts/api'
 import { useTransactions } from '@/features/transactions/api'
 import { TRANSACTION_CATEGORIES, TRANSACTION_TYPES } from '@/features/transactions/constants'
 import type { TransactionType } from '@/lib/api/types'
+import { cn } from '@/lib/utils'
 
 const RESET_VALUE = 'all'
 
@@ -88,17 +89,48 @@ export default function TransactionsPage() {
   }
 
   const transactions = transactionsQuery.data
+  const activeFilters = [category, type, from, to].filter((value) => value !== RESET_VALUE).length
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Transactions"
         description="Search and filter every movement, in naira and coin."
-      />
+      >
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+          <SearchCheck className="size-3.5" aria-hidden="true" />
+          Live activity
+        </span>
+      </PageHeader>
 
-      <Card>
-        <CardContent className="space-y-4 py-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_160px_150px_150px_auto]">
+      <Card className="overflow-hidden rounded-3xl border-border/60 shadow-card-hover">
+        <div
+          aria-hidden="true"
+          className="h-1 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
+        />
+        <CardContent className="space-y-4 py-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Filter className="size-4 text-muted-foreground" aria-hidden="true" />
+              Filters
+              {activeFilters > 0 ? (
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400">
+                  {activeFilters} active
+                </span>
+              ) : null}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              disabled={!hasFilters}
+              className={cn('h-8 text-muted-foreground hover:text-foreground')}
+            >
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
+              Reset
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_160px_150px_150px]">
             <SearchInput
               value={search}
               onValueChange={handleSearchChange}
@@ -154,12 +186,6 @@ export default function TransactionsPage() {
                 onChange={(event) => handleToChange(event.target.value)}
               />
             </div>
-            <div className="flex items-end">
-              <Button variant="outline" onClick={handleReset} disabled={!hasFilters}>
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Reset
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -167,13 +193,13 @@ export default function TransactionsPage() {
       {transactionsQuery.isPending ? (
         <TableSkeleton columns={6} rows={10} />
       ) : transactions && transactions.items.length > 0 ? (
-        <Card>
+        <Card className="overflow-hidden rounded-3xl border-border/60 shadow-card-hover">
           <CardContent className="p-0">
             <TransactionTable
               transactions={transactions.items}
               accountName={(accountId) => accountNameById?.get(accountId) ?? accountId}
             />
-            <div className="border-t p-4">
+            <div className="border-t bg-muted/20 p-4">
               <Pagination
                 page={transactions.page}
                 totalPages={transactions.totalPages}

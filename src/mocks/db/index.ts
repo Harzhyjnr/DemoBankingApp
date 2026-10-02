@@ -4,6 +4,7 @@ import type {
   Account,
   Card,
   Currency,
+  NotificationPreferences,
   Paginated,
   PaginationParams,
   RecentTransfer,
@@ -16,6 +17,12 @@ import type {
 } from '@/lib/api/types'
 
 const CURRENCIES: Currency[] = ['NGN', 'USD', 'EUR', 'GBP']
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  transferAlerts: true,
+  securityAlerts: true,
+  promotions: false,
+}
 
 interface TransferInput {
   fromAccountId: string
@@ -38,6 +45,7 @@ let cards: Card[]
 let userSeq: number
 let txnSeq: number
 let transferCounter: number
+let notificationPrefs: Record<string, NotificationPreferences>
 
 function init() {
   const seed = Number(import.meta.env.VITE_APP_MOCK_SEED ?? DEFAULT_MOCK_SEED)
@@ -49,6 +57,7 @@ function init() {
   userSeq = 1
   txnSeq = transactions.length
   transferCounter = 0
+  notificationPrefs = {}
 }
 
 init()
@@ -70,6 +79,14 @@ export const db = {
     return users.find((record) => record.email.toLowerCase() === email.toLowerCase()) ?? null
   },
 
+  findUserByBvn(bvn: string): MockUserRecord | null {
+    return users.find((record) => record.bvn === bvn) ?? null
+  },
+
+  findUserByNin(nin: string): MockUserRecord | null {
+    return users.find((record) => record.nin === nin) ?? null
+  },
+
   findUserById(id: string): MockUserRecord | null {
     return users.find((record) => record.id === id) ?? null
   },
@@ -79,8 +96,12 @@ export const db = {
     lastName: string
     email: string
     password: string
+    bvn: string
+    nin: string
   }): MockUserRecord | null {
     if (this.findUserByEmail(input.email)) return null
+    if (users.some((record) => record.bvn === input.bvn)) return null
+    if (users.some((record) => record.nin === input.nin)) return null
     const record: MockUserRecord = {
       id: `usr_${userSeq++}`,
       firstName: input.firstName,
@@ -89,6 +110,8 @@ export const db = {
       password: input.password,
       pin: '1234',
       preferredCurrency: 'NGN',
+      bvn: input.bvn,
+      nin: input.nin,
       createdAt: new Date().toISOString(),
     }
     users.push(record)
@@ -353,5 +376,17 @@ export const db = {
       record.preferredCurrency = patch.preferredCurrency
     }
     return this.toPublicUser(record)
+  },
+
+  getNotificationPreferences(userId: string): NotificationPreferences {
+    return { ...DEFAULT_NOTIFICATION_PREFS, ...notificationPrefs[userId] }
+  },
+
+  setNotificationPreferences(
+    userId: string,
+    prefs: NotificationPreferences,
+  ): NotificationPreferences {
+    notificationPrefs[userId] = { ...prefs }
+    return { ...notificationPrefs[userId] }
   },
 }

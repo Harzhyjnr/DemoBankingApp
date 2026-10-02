@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import MobileNav from '@/components/layout/MobileNav'
 import { BottomTabs } from '@/components/layout/BottomTabs'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
 export default function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { pathname } = useLocation()
 
   return (
     <div className="relative flex min-h-screen overflow-x-clip bg-background text-foreground">
@@ -20,7 +22,9 @@ export default function AppShell() {
         <Topbar onMenuClick={() => setMobileNavOpen(true)} />
         <main className="flex-1 pb-20 md:pb-0">
           <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 lg:px-8">
-            <Outlet />
+            <ErrorBoundary resetKeys={[pathname]}>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, ReceiptText } from 'lucide-react'
 
 import { Money } from '@/components/shared/Money'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -19,12 +19,25 @@ interface TransactionTableProps {
   accountName?: (accountId: string) => string
 }
 
+function initialsOf(description: string): string {
+  return description
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join('')
+}
+
 export function TransactionTable({ transactions, accountName }: TransactionTableProps) {
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Date</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <TableHead>
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="size-3.5 text-muted-foreground/60" aria-hidden="true" />
+              Date
+            </span>
+          </TableHead>
           {accountName ? <TableHead>Account</TableHead> : null}
           <TableHead>Description</TableHead>
           <TableHead>Category</TableHead>
@@ -37,8 +50,8 @@ export function TransactionTable({ transactions, accountName }: TransactionTable
         {transactions.map((transaction) => {
           const isCredit = transaction.amount.amount > 0
           return (
-            <TableRow key={transaction.id}>
-              <TableCell className="text-muted-foreground">
+            <TableRow key={transaction.id} className="group transition-colors hover:bg-muted/40">
+              <TableCell className="whitespace-nowrap text-muted-foreground">
                 {formatDate(transaction.date)}
               </TableCell>
               {accountName ? (
@@ -46,8 +59,26 @@ export function TransactionTable({ transactions, accountName }: TransactionTable
                   {accountName(transaction.accountId)}
                 </TableCell>
               ) : null}
-              <TableCell className="font-medium">{transaction.description}</TableCell>
-              <TableCell className="text-muted-foreground">{transaction.category}</TableCell>
+              <TableCell>
+                <span
+                  className={cn(
+                    'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    isCredit
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+                  )}
+                  aria-hidden="true"
+                >
+                  {initialsOf(transaction.description)}
+                </span>
+                <span className="ml-3 font-medium">{transaction.description}</span>
+              </TableCell>
+              <TableCell>
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <ReceiptText className="size-3.5 text-muted-foreground/60" aria-hidden="true" />
+                  {transaction.category}
+                </span>
+              </TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-1 capitalize text-muted-foreground">
                   {isCredit ? (
@@ -63,8 +94,10 @@ export function TransactionTable({ transactions, accountName }: TransactionTable
               </TableCell>
               <TableCell
                 className={cn(
-                  'text-right tabular-nums',
-                  isCredit ? 'text-emerald-600' : 'text-rose-600',
+                  'whitespace-nowrap text-right font-semibold tabular-nums',
+                  isCredit
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400',
                 )}
               >
                 <Money amount={transaction.amount.amount} currency={transaction.amount.currency} />

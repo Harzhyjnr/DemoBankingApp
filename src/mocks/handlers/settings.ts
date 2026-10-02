@@ -1,12 +1,18 @@
 import { http, HttpResponse } from 'msw'
 import { db } from '@/mocks/db'
 import { badRequest, unauthorized } from '@/mocks/handlers/http'
-import type { Currency } from '@/lib/api/types'
+import type { Currency, NotificationPreferences } from '@/lib/api/types'
 
 interface ProfilePatchBody {
   firstName?: unknown
   lastName?: unknown
   preferredCurrency?: unknown
+}
+
+interface NotificationPrefsBody {
+  transferAlerts?: unknown
+  securityAlerts?: unknown
+  promotions?: unknown
 }
 
 export const settingHandlers = [
@@ -28,7 +34,7 @@ export const settingHandlers = [
 
     if (firstName === '') return badRequest('VALIDATION_ERROR', 'First name cannot be empty.')
     if (lastName === '') return badRequest('VALIDATION_ERROR', 'Last name cannot be empty.')
-    if (preferredCurrency && !['USD', 'EUR', 'GBP'].includes(preferredCurrency)) {
+    if (preferredCurrency && !['NGN', 'USD', 'EUR', 'GBP'].includes(preferredCurrency)) {
       return badRequest('VALIDATION_ERROR', 'Unsupported currency.')
     }
 
@@ -41,5 +47,38 @@ export const settingHandlers = [
     const userId = db.requireAuth(request)
     if (!userId) return unauthorized()
     return HttpResponse.json({ ok: true })
+  }),
+
+  http.get('*/api/settings/notifications', ({ request }) => {
+    const userId = db.requireAuth(request)
+    if (!userId) return unauthorized()
+    return HttpResponse.json(db.getNotificationPreferences(userId))
+  }),
+
+  http.patch('*/api/settings/notifications', async ({ request }) => {
+    const userId = db.requireAuth(request)
+    if (!userId) return unauthorized()
+
+    let body: NotificationPrefsBody = {}
+    try {
+      body = (await request.json()) as NotificationPrefsBody
+    } catch {
+      return badRequest('INVALID_REQUEST', 'Malformed request body.')
+    }
+
+    const prefs: Partial<NotificationPreferences> = {
+      transferAlerts: typeof body.transferAlerts === 'boolean' ? body.transferAlerts : undefined,
+      securityAlerts: typeof body.securityAlerts === 'boolean' ? body.securityAlerts : undefined,
+      promotions: typeof body.promotions === 'boolean' ? body.promotions : undefined,
+    }
+
+    const current = db.getNotificationPreferences(userId)
+    const next = db.setNotificationPreferences(userId, {
+      ...current,
+      ...Object.fromEntries(
+        Object.entries(prefs).filter(([, value]) => typeof value === 'boolean'),
+      ),
+    })
+    return HttpResponse.json(next)
   }),
 ]

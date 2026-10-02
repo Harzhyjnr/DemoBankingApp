@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -82,15 +82,24 @@ export function LoginForm() {
       <form onSubmit={onSubmit} noValidate className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            aria-invalid={errors.email ? 'true' : undefined}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            {...register('email')}
-          />
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground"
+            >
+              <Mail className="size-4" />
+            </span>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="pl-9"
+              aria-invalid={errors.email ? 'true' : undefined}
+              aria-describedby={errors.email ? 'email-error' : undefined}
+              {...register('email')}
+            />
+          </div>
           <FieldError id={errors.email ? 'email-error' : undefined}>
             {errors.email?.message}
           </FieldError>
@@ -99,11 +108,17 @@ export function LoginForm() {
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground"
+            >
+              <Lock className="size-4" />
+            </span>
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              className="pr-10"
+              className="pl-9 pr-10"
               aria-invalid={errors.password ? 'true' : undefined}
               aria-describedby={errors.password ? 'password-error' : undefined}
               {...register('password')}
@@ -124,31 +139,55 @@ export function LoginForm() {
           </FieldError>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox id="rememberMe" {...register('rememberMe')} />
-          <Label htmlFor="rememberMe" className="cursor-pointer">
-            Remember me
-          </Label>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Checkbox id="rememberMe" {...register('rememberMe')} />
+            <Label htmlFor="rememberMe" className="cursor-pointer">
+              Remember me
+            </Label>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <ShieldCheck className="size-3.5 text-emerald-500" aria-hidden="true" />
+            256-bit encryption
+          </span>
         </div>
 
         <FieldError>{mutation.isError ? submitError : null}</FieldError>
 
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button
+          type="submit"
+          disabled={mutation.isPending}
+          className="h-11 w-full bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+        >
           {mutation.isPending ? <Spinner label="Signing in" /> : 'Sign in'}
         </Button>
       </form>
 
-      <div className="mt-4 rounded-md border bg-muted/50 p-4 text-sm">
-        <p className="font-medium">Demo credentials</p>
-        <p className="mt-1 text-muted-foreground">demo@bank.com / demo1234</p>
-        <Button
-          type="button"
-          variant="link"
-          className="mt-1 h-auto p-0"
-          onClick={fillDemoCredentials}
-        >
-          Use demo account
-        </Button>
+      <div className="mt-5 rounded-2xl border border-dashed border-emerald-500/30 bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-4 dark:from-emerald-500/5 dark:to-teal-500/5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              <Sparkles
+                className="size-4 text-emerald-600 dark:text-emerald-400"
+                aria-hidden="true"
+              />
+              Try the demo account
+            </p>
+            <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+              demo@bank.com / demo1234
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={fillDemoCredentials}
+          >
+            <KeyRound className="size-3.5" aria-hidden="true" />
+            Use demo account
+          </Button>
+        </div>
       </div>
     </>
   )

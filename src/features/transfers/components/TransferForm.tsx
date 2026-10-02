@@ -3,10 +3,12 @@ import {
   ArrowLeft,
   ArrowRight,
   Building2,
+  Check,
   CheckCircle2,
   Clock,
   Landmark,
   Loader2,
+  Lock,
   UserPlus,
 } from 'lucide-react'
 
@@ -27,6 +29,7 @@ import { useAccounts } from '@/features/accounts/api'
 import { useCreateTransfer, useRecentTransfers } from '@/features/transfers/api'
 import { toMinorUnits, formatMoney } from '@/lib/money'
 import type { Account, TransferRecipient } from '@/lib/api/types'
+import { cn } from '@/lib/utils'
 
 interface TransferFormProps {
   defaultFromAccountId?: string
@@ -34,6 +37,14 @@ interface TransferFormProps {
 }
 
 type Step = 'details' | 'review' | 'done'
+
+const STEP_ORDER: Step[] = ['details', 'review', 'done']
+
+const STEP_LABELS: Record<Step, string> = {
+  details: 'Details',
+  review: 'Review',
+  done: 'Done',
+}
 
 interface FormState {
   fromAccountId: string
@@ -60,6 +71,46 @@ function parseAmount(raw: string): number {
   const value = Number(raw.trim().replace(',', '.'))
   if (!Number.isFinite(value) || value <= 0) return NaN
   return toMinorUnits(value)
+}
+
+function StepIndicator({ step }: { step: Step }) {
+  const activeIndex = STEP_ORDER.indexOf(step)
+  return (
+    <ol aria-label="Transfer progress" className="flex items-center gap-2">
+      {STEP_ORDER.map((label, index) => {
+        const state =
+          index < activeIndex ? 'complete' : index === activeIndex ? 'current' : 'upcoming'
+        return (
+          <li key={label} className="flex items-center gap-2">
+            <span
+              className={cn(
+                'flex size-7 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
+                state === 'complete' &&
+                  'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                state === 'current' &&
+                  'border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30',
+                state === 'upcoming' && 'border-border text-muted-foreground',
+              )}
+              aria-current={state === 'current' ? 'step' : undefined}
+            >
+              {state === 'complete' ? <Check className="size-3.5" aria-hidden="true" /> : index + 1}
+            </span>
+            <span
+              className={cn(
+                'text-xs font-medium',
+                state === 'current' ? 'text-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {STEP_LABELS[label]}
+            </span>
+            {index < STEP_ORDER.length - 1 ? (
+              <span aria-hidden="true" className="mx-1 h-px w-6 bg-border" />
+            ) : null}
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
 export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormProps) {
@@ -157,8 +208,14 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
     return (
       <div className="space-y-8">
         <div className="space-y-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40">
-            <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
+          <div className="relative mx-auto flex size-20 items-center justify-center">
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full bg-emerald-500/15 animate-pulse"
+            />
+            <span className="relative flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-600/30">
+              <CheckCircle2 className="size-8" aria-hidden="true" />
+            </span>
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold tracking-tight">Transfer complete</h2>
@@ -243,30 +300,31 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
   if (step === 'review' && review) {
     return (
       <div className="space-y-6">
+        <StepIndicator step="review" />
         <h2 className="text-lg font-semibold tracking-tight">Review transfer</h2>
         <dl className="divide-y overflow-hidden rounded-2xl border border-border/60 bg-muted/40">
-          <div className="flex items-center justify-between px-4 py-3">
-            <dt className="text-sm text-muted-foreground">From</dt>
-            <dd className="flex items-center gap-2 text-sm font-medium">
-              <Landmark className="h-4 w-4" aria-hidden="true" />
-              {review.fromAccount?.name}
-            </dd>
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Landmark className="size-4 text-emerald-500" aria-hidden="true" />
+              From
+            </dt>
+            <dd className="text-sm font-medium">{review.fromAccount?.name}</dd>
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <dt className="text-sm text-muted-foreground">To</dt>
-            <dd className="flex items-center gap-2 text-sm font-medium">
-              <Building2 className="h-4 w-4" aria-hidden="true" />
-              {review.toAccount?.name}
-            </dd>
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Building2 className="size-4 text-teal-500" aria-hidden="true" />
+              To
+            </dt>
+            <dd className="text-sm font-medium">{review.toAccount?.name}</dd>
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/5 to-transparent px-4 py-4">
             <dt className="text-sm text-muted-foreground">Amount</dt>
-            <dd className="text-lg font-semibold tabular-nums">
+            <dd className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
               <Money amount={review.amountMinor} currency={currency} />
             </dd>
           </div>
           {review.description ? (
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
               <dt className="text-sm text-muted-foreground">Note</dt>
               <dd className="text-sm font-medium">{review.description}</dd>
             </div>
@@ -275,19 +333,28 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
 
         <div className="space-y-1.5">
           <Label htmlFor="transfer-pin">Confirm with your 4-digit PIN</Label>
-          <Input
-            id="transfer-pin"
-            type="password"
-            inputMode="numeric"
-            autoComplete="off"
-            maxLength={4}
-            placeholder="••••"
-            value={pin}
-            aria-invalid={pinError ? true : undefined}
-            onChange={(event) => {
-              setPin(event.target.value.replace(/\D/g, '').slice(0, 4))
-            }}
-          />
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground"
+            >
+              <Lock className="size-4" />
+            </span>
+            <Input
+              id="transfer-pin"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={4}
+              placeholder="••••"
+              value={pin}
+              className="pl-9"
+              aria-invalid={pinError ? true : undefined}
+              onChange={(event) => {
+                setPin(event.target.value.replace(/\D/g, '').slice(0, 4))
+              }}
+            />
+          </div>
           <p className="text-xs text-muted-foreground">Demo PIN: 1234</p>
           <FieldError>{pinError}</FieldError>
         </div>
@@ -303,7 +370,11 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back
           </Button>
-          <Button onClick={submit} disabled={transferMutation.isPending}>
+          <Button
+            onClick={submit}
+            disabled={transferMutation.isPending}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+          >
             {transferMutation.isPending && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             )}
@@ -314,8 +385,11 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
     )
   }
 
+  const fromAccount = accounts.find((account) => account.id === form.fromAccountId)
+
   return (
     <div className="space-y-6">
+      <StepIndicator step="details" />
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">New transfer</h2>
         <p className="text-sm text-muted-foreground">
@@ -330,7 +404,7 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
             value={form.fromAccountId}
             onValueChange={(value) => selectAccount(value, 'fromAccountId')}
           >
-            <SelectTrigger id="from-account" aria-label="Source account">
+            <SelectTrigger id="from-account" aria-label="Source account" className="h-12">
               <SelectValue placeholder="Select account" />
             </SelectTrigger>
             <SelectContent>
@@ -351,7 +425,7 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
             value={form.toAccountId}
             onValueChange={(value) => selectAccount(value, 'toAccountId')}
           >
-            <SelectTrigger id="to-account" aria-label="Destination account">
+            <SelectTrigger id="to-account" aria-label="Destination account" className="h-12">
               <SelectValue placeholder="Select account" />
             </SelectTrigger>
             <SelectContent>
@@ -373,6 +447,12 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
         onValueChange={(value) => setForm((current) => ({ ...current, amount: value }))}
         currency={currency}
         error={errors.amount}
+        className="h-12 text-lg font-semibold"
+        hint={
+          fromAccount
+            ? `Available: ${formatMoney(fromAccount.balance.amount, { currency: fromAccount.currency })}`
+            : undefined
+        }
       />
 
       <div className="space-y-1.5">
@@ -396,7 +476,11 @@ export function TransferForm({ defaultFromAccountId, onCancel }: TransferFormPro
         ) : (
           <span />
         )}
-        <Button onClick={goToReview} disabled={accountsQuery.isPending}>
+        <Button
+          onClick={goToReview}
+          disabled={accountsQuery.isPending}
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+        >
           Review transfer
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Button>

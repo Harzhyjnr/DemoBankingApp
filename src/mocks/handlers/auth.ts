@@ -11,7 +11,11 @@ interface RegisterBody {
   lastName?: unknown
   email?: unknown
   password?: unknown
+  bvn?: unknown
+  nin?: unknown
 }
+
+const IDENTIFIER_REGEX = /^\d{11}$/
 
 export const authHandlers = [
   http.post('*/api/auth/login', async ({ request }) => {
@@ -54,10 +58,26 @@ export const authHandlers = [
     const lastName = typeof body.lastName === 'string' ? body.lastName.trim() : ''
     const email = typeof body.email === 'string' ? body.email.trim() : ''
     const password = typeof body.password === 'string' ? body.password : ''
+    const bvn = typeof body.bvn === 'string' ? body.bvn.trim() : ''
+    const nin = typeof body.nin === 'string' ? body.nin.trim() : ''
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !bvn || !nin) {
       return HttpResponse.json(
         { error: { code: 'VALIDATION_ERROR', message: 'All fields are required.' } },
+        { status: 400 },
+      )
+    }
+
+    if (!IDENTIFIER_REGEX.test(bvn)) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'BVN must be an 11-digit number.' } },
+        { status: 400 },
+      )
+    }
+
+    if (!IDENTIFIER_REGEX.test(nin)) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'NIN must be an 11-digit number.' } },
         { status: 400 },
       )
     }
@@ -70,8 +90,22 @@ export const authHandlers = [
       )
     }
 
-    const record = db.createUser({ firstName, lastName, email, password })
+    const record = db.createUser({ firstName, lastName, email, password, bvn, nin })
     if (!record) {
+      const bvnTaken = db.findUserByBvn(bvn)
+      if (bvnTaken) {
+        return HttpResponse.json(
+          { error: { code: 'BVN_TAKEN', message: 'This BVN is already linked to an account.' } },
+          { status: 409 },
+        )
+      }
+      const ninTaken = db.findUserByNin(nin)
+      if (ninTaken) {
+        return HttpResponse.json(
+          { error: { code: 'NIN_TAKEN', message: 'This NIN is already linked to an account.' } },
+          { status: 409 },
+        )
+      }
       return HttpResponse.json(
         { error: { code: 'EMAIL_TAKEN', message: 'An account with this email already exists.' } },
         { status: 409 },

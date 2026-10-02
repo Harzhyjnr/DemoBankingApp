@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { axe, toHaveNoViolations } from 'jest-axe'
-import { describe, expect, it } from 'vitest'
+import type { ReactElement } from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import AppShell from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import {
@@ -67,6 +68,32 @@ describe('AppShell', () => {
   it('has no accessibility violations', async () => {
     const { container } = renderShell()
     expect(await axe(container)).toHaveNoViolations()
+  })
+})
+
+function CrashingPage(): ReactElement {
+  throw new Error('Page crashed')
+}
+
+describe('AppShell error boundary', () => {
+  it('keeps the shell navigation when a routed page crashes', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/boom']}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/boom" element={<CrashingPage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Page crashed')
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+    vi.restoreAllMocks()
   })
 })
 

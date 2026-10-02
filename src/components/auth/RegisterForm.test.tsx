@@ -17,6 +17,8 @@ const VALID_REGISTRATION = {
   lastName: 'Hopper',
   email: 'grace@bank.com',
   password: 'supersecret1',
+  bvn: '22014487501',
+  nin: '11026753894',
 }
 
 function renderAt(initialEntry = '/register') {
@@ -48,6 +50,8 @@ async function fillRegistration(overrides: RegistrationOverrides = {}) {
     screen.getByLabelText('Confirm password'),
     values.confirmPassword ?? values.password,
   )
+  await user.type(screen.getByLabelText('BVN'), values.bvn)
+  await user.type(screen.getByLabelText('NIN'), values.nin)
   await user.click(screen.getByLabelText(/I agree to the Terms of Service/))
   await user.click(screen.getByRole('button', { name: 'Create account' }))
   return user
@@ -66,6 +70,8 @@ describe('RegisterForm', () => {
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(screen.getByLabelText(/^Password$/)).toBeInTheDocument()
     expect(screen.getByLabelText('Confirm password')).toBeInTheDocument()
+    expect(screen.getByLabelText('BVN')).toBeInTheDocument()
+    expect(screen.getByLabelText('NIN')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Sign in/ })).toBeInTheDocument()
   })
 
@@ -88,6 +94,40 @@ describe('RegisterForm', () => {
     expect(await screen.findByText('Passwords do not match.')).toBeInTheDocument()
   })
 
+  it('rejects a BVN that is not 11 digits', async () => {
+    renderAt()
+    await fillRegistration({ bvn: '12345' })
+
+    expect(await screen.findByText('BVN must be 11 digits.')).toBeInTheDocument()
+    expect(db.findUserByEmail(VALID_REGISTRATION.email)).toBeNull()
+  })
+
+  it('rejects an NIN that is not 11 digits', async () => {
+    renderAt()
+    await fillRegistration({ nin: '12345' })
+
+    expect(await screen.findByText('NIN must be 11 digits.')).toBeInTheDocument()
+    expect(db.findUserByEmail(VALID_REGISTRATION.email)).toBeNull()
+  })
+
+  it('rejects a BVN already linked to an account', async () => {
+    renderAt()
+    await fillRegistration({ email: 'someone-else@bank.com', bvn: '12345678901' })
+
+    expect(await screen.findByText('This BVN is already linked to an account.')).toBeInTheDocument()
+    expect(useAuthStore.getState().status).not.toBe('authenticated')
+  })
+
+  it('stores the verified BVN and NIN on the created account', async () => {
+    renderAt()
+    await fillRegistration()
+
+    expect(await screen.findByText('Dashboard target')).toBeInTheDocument()
+    const record = db.findUserByEmail(VALID_REGISTRATION.email)
+    expect(record?.bvn).toBe(VALID_REGISTRATION.bvn)
+    expect(record?.nin).toBe(VALID_REGISTRATION.nin)
+  })
+
   it('rejects submit when terms are not accepted', async () => {
     const user = userEvent.setup()
     renderAt()
@@ -96,6 +136,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText('Email'), VALID_REGISTRATION.email)
     await user.type(screen.getByLabelText(/^Password$/), VALID_REGISTRATION.password)
     await user.type(screen.getByLabelText('Confirm password'), VALID_REGISTRATION.password)
+    await user.type(screen.getByLabelText('BVN'), VALID_REGISTRATION.bvn)
+    await user.type(screen.getByLabelText('NIN'), VALID_REGISTRATION.nin)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
     expect(await screen.findByText('You must accept the terms to continue.')).toBeInTheDocument()
@@ -120,6 +162,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText('Email'), 'demo@bank.com')
     await user.type(screen.getByLabelText(/^Password$/), 'supersecret1')
     await user.type(screen.getByLabelText('Confirm password'), 'supersecret1')
+    await user.type(screen.getByLabelText('BVN'), VALID_REGISTRATION.bvn)
+    await user.type(screen.getByLabelText('NIN'), VALID_REGISTRATION.nin)
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/))
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
@@ -137,6 +181,8 @@ describe('RegisterForm', () => {
     await user.type(screen.getByLabelText('Email'), 'demo@bank.com')
     await user.type(screen.getByLabelText(/^Password$/), VALID_REGISTRATION.password)
     await user.type(screen.getByLabelText('Confirm password'), VALID_REGISTRATION.password)
+    await user.type(screen.getByLabelText('BVN'), VALID_REGISTRATION.bvn)
+    await user.type(screen.getByLabelText('NIN'), VALID_REGISTRATION.nin)
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/))
     await user.click(screen.getByRole('button', { name: 'Create account' }))
     await screen.findByText('An account with this email already exists.')

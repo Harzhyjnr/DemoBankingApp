@@ -1,6 +1,18 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Github, Rocket } from 'lucide-react'
+import {
+  Bell,
+  Braces,
+  Fingerprint,
+  Github,
+  Globe,
+  Layers,
+  Palette,
+  Rocket,
+  SlidersHorizontal,
+  Sparkles,
+  Table2,
+} from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -51,6 +63,39 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Money } from '@/components/shared/Money'
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof Layers
+  title: string
+  description: string
+}) {
+  return (
+    <CardHeader>
+      <div className="flex items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-500/15 ring-1 ring-emerald-500/20">
+          <Icon className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+        </span>
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+      </div>
+    </CardHeader>
+  )
+}
+
+const SWATCHES = [
+  { name: 'Emerald', className: 'bg-emerald-500' },
+  { name: 'Teal', className: 'bg-teal-500' },
+  { name: 'Cyan', className: 'bg-cyan-500' },
+  { name: 'Violet', className: 'bg-violet-500' },
+  { name: 'Rose', className: 'bg-rose-500' },
+  { name: 'Amber', className: 'bg-amber-500' },
+]
 
 function DemoForm() {
   return (
@@ -105,20 +150,54 @@ function DemoDialog() {
 export default function UiGalleryPage() {
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">UI Gallery</h1>
-        <p className="mt-1 text-muted-foreground">
-          Every Phase 1 primitive, consumed so it ships with at least one user.
-        </p>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-teal-900 to-cyan-900 p-8 text-white shadow-xl lg:p-10">
+        <div aria-hidden="true" className="absolute inset-0 bg-grid opacity-20 bg-radial-fade" />
+        <div
+          aria-hidden="true"
+          className="absolute -top-20 -right-20 size-64 rounded-full bg-white/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-24 -left-16 size-72 rounded-full bg-emerald-300/20 blur-3xl"
+        />
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-xl">
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/20">
+              <Palette className="size-3.5" aria-hidden="true" />
+              Design system
+            </span>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight">UI Gallery</h1>
+            <p className="mt-2 text-sm text-white/80">
+              Every Phase 1 primitive, consumed so it ships with at least one user — buttons, forms,
+              dialogs, tables, and feedback, all living happily in one place.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums">
+                <Money amount={12_345_67} currency="NGN" />
+              </p>
+              <p className="text-xs text-white/70">Sample balance in minor units</p>
+            </div>
+            <div className="h-12 w-px bg-white/20" />
+            <div className="text-right">
+              <p className="text-2xl font-bold">14+</p>
+              <p className="text-xs text-white/70">primitives shipped</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Buttons &amp; badges</CardTitle>
-          <CardDescription>Variants via class-variance-authority.</CardDescription>
-        </CardHeader>
+      <Card className="rounded-3xl border-border/60 shadow-card-hover">
+        <SectionHeading
+          icon={Sparkles}
+          title="Buttons &amp; badges"
+          description="Variants via class-variance-authority."
+        />
         <CardContent className="flex flex-wrap items-center gap-3">
-          <Button>Default</Button>
+          <Button variant="default" className="bg-gradient-to-r from-emerald-600 to-teal-600">
+            Default
+          </Button>
           <Button variant="secondary">Secondary</Button>
           <Button variant="outline">Outline</Button>
           <Button variant="ghost">Ghost</Button>
@@ -144,22 +223,24 @@ export default function UiGalleryPage() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Form: input + label + button</CardTitle>
-            <CardDescription>Radix label wires focus to the input.</CardDescription>
-          </CardHeader>
+        <Card className="rounded-3xl border-border/60 shadow-card-hover">
+          <SectionHeading
+            icon={SlidersHorizontal}
+            title="Form: input + label + button"
+            description="Radix label wires focus to the input."
+          />
           <CardContent>
             <DemoForm />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Select &amp; money</CardTitle>
-            <CardDescription>Radix select listbox plus the Money component.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <Card className="rounded-3xl border-border/60 shadow-card-hover">
+          <SectionHeading
+            icon={Globe}
+            title="Select, money &amp; colors"
+            description="Radix listbox, the Money component and theme tokens."
+          />
+          <CardContent className="space-y-5">
             <Select defaultValue="usd">
               <SelectTrigger className="w-[200px]" aria-label="Currency">
                 <SelectValue />
@@ -179,15 +260,26 @@ export default function UiGalleryPage() {
                 <Money amount={1_234_567} currency="EUR" locale="de-DE" />
               </p>
             </div>
+            <div className="flex flex-wrap gap-2" aria-label="Color palette">
+              {SWATCHES.map((swatch) => (
+                <span
+                  key={swatch.name}
+                  className={`size-8 rounded-full ${swatch.className} ring-2 ring-background shadow-sm`}
+                  title={swatch.name}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dialog &amp; dropdown</CardTitle>
-          <CardDescription>Focus-trapped and keyboard navigable via Radix.</CardDescription>
-        </CardHeader>
+      <Card className="rounded-3xl border-border/60 shadow-card-hover">
+        <SectionHeading
+          icon={Layers}
+          title="Dialog, dropdown &amp; tooltip"
+          description="Focus-trapped and keyboard navigable via Radix."
+        />
         <CardContent className="flex flex-wrap items-center gap-3">
           <DemoDialog />
           <DropdownMenu>
@@ -219,11 +311,12 @@ export default function UiGalleryPage() {
           <TabsTrigger value="details">Details</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tabs: overview</CardTitle>
-              <CardDescription>Keyboard arrows move between tabs.</CardDescription>
-            </CardHeader>
+          <Card className="rounded-3xl border-border/60 shadow-card-hover">
+            <SectionHeading
+              icon={Fingerprint}
+              title="Tabs: overview"
+              description="Keyboard arrows move between tabs."
+            />
             <CardContent className="flex items-center gap-3">
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" alt="Avatar" />
@@ -237,10 +330,12 @@ export default function UiGalleryPage() {
           </Card>
         </TabsContent>
         <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tabs: details</CardTitle>
-            </CardHeader>
+          <Card className="rounded-3xl border-border/60 shadow-card-hover">
+            <SectionHeading
+              icon={Braces}
+              title="Tabs: details"
+              description="Skeletons preview loading states."
+            />
             <CardContent>
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="mt-3 h-4 w-1/2" />
@@ -249,11 +344,12 @@ export default function UiGalleryPage() {
         </TabsContent>
       </Tabs>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Table</CardTitle>
-          <CardDescription>Calls with amounts rendered via Money.</CardDescription>
-        </CardHeader>
+      <Card className="rounded-3xl border-border/60 shadow-card-hover">
+        <SectionHeading
+          icon={Table2}
+          title="Table"
+          description="Calls with amounts rendered via Money."
+        />
         <CardContent>
           <Table>
             <TableCaption>Recent demo transactions.</TableCaption>
@@ -291,11 +387,16 @@ export default function UiGalleryPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Toast (sonner)</CardTitle>
-          <CardDescription>Snackbar notifications, keyboard dismissible.</CardDescription>
-        </CardHeader>
+      <Card className="overflow-hidden rounded-3xl border-border/60 shadow-card-hover">
+        <div
+          aria-hidden="true"
+          className="h-1 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
+        />
+        <SectionHeading
+          icon={Bell}
+          title="Toast (sonner)"
+          description="Snackbar notifications, keyboard dismissible."
+        />
         <CardFooter>
           <Button variant="outline" onClick={() => toast('Toast from the gallery')}>
             Fire a toast

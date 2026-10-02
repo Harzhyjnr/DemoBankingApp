@@ -187,6 +187,12 @@ export interface ProfileUpdate {
   preferredCurrency?: Currency
 }
 
+export interface NotificationPreferences {
+  transferAlerts: boolean
+  securityAlerts: boolean
+  promotions: boolean
+}
+
 export interface ApiErrorBody {
   error: {
     code: string

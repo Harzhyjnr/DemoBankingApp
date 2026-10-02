@@ -11,6 +11,8 @@ export interface MockUserRecord {
   password: string
   pin: string
   preferredCurrency: 'NGN' | 'USD' | 'EUR' | 'GBP'
+  bvn: string
+  nin: string
   createdAt: string
 }
 
@@ -66,6 +68,8 @@ function seedData(seed: number = DEFAULT_MOCK_SEED): SeedBundle {
     pin: '1234',
     preferredCurrency: 'NGN',
     createdAt: '2024-01-15T08:00:00.000Z',
+    bvn: '12345678901',
+    nin: '98765432101',
   }
 
   const transactions: Transaction[] = []

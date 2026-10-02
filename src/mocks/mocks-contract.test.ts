@@ -5,6 +5,7 @@ import type {
   Account,
   AuthResponse,
   Card,
+  NotificationPreferences,
   RecentTransfersResponse,
   SpendingInsights,
   TransferResult,
@@ -86,6 +87,8 @@ describe('MSW contract: endpoints return the documented shape', () => {
         lastName: 'Hopper',
         email: 'grace@bank.com',
         password: 'supersecret1',
+        bvn: '22014487501',
+        nin: '11026753894',
       }),
     })
     expect(auth.user.email).toBe('grace@bank.com')
@@ -99,9 +102,25 @@ describe('MSW contract: endpoints return the documented shape', () => {
           lastName: 'Hopper',
           email: 'grace@bank.com',
           password: 'supersecret1',
+          bvn: '22014487501',
+          nin: '11026753894',
         }),
       }),
     ).rejects.toMatchObject({ status: 409, code: 'EMAIL_TAKEN' })
+
+    await expect(
+      apiClient('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          firstName: 'Alan',
+          lastName: 'Turing',
+          email: 'alan@bank.com',
+          password: 'supersecret1',
+          bvn: '12345678901',
+          nin: '11026753894',
+        }),
+      }),
+    ).rejects.toMatchObject({ status: 409, code: 'BVN_TAKEN' })
   })
 
   it('GET /accounts returns accounts with money in minor units', async () => {
@@ -301,6 +320,27 @@ describe('MSW contract: endpoints return the documented shape', () => {
       body: JSON.stringify({}),
     })
     expect(security.ok).toBe(true)
+  })
+
+  it('GET/PATCH /settings/notifications round-trip preferences', async () => {
+    await loginAsDemo()
+    const initial = await apiClient<NotificationPreferences>('/settings/notifications')
+    expect(initial).toMatchObject({
+      transferAlerts: true,
+      securityAlerts: true,
+      promotions: false,
+    })
+
+    const updated = await apiClient<NotificationPreferences>('/settings/notifications', {
+      method: 'PATCH',
+      body: JSON.stringify({ promotions: true, transferAlerts: false }),
+    })
+    expect(updated.promotions).toBe(true)
+    expect(updated.transferAlerts).toBe(false)
+    expect(updated.securityAlerts).toBe(true)
+
+    const after = await apiClient<NotificationPreferences>('/settings/notifications')
+    expect(after).toEqual(updated)
   })
 
   it('POST /auth/logout returns 204', async () => {

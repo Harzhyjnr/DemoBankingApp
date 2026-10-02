@@ -11,6 +11,8 @@ export interface RegisterPayload {
   lastName: string
   email: string
   password: string
+  bvn: string
+  nin: string
 }
 
 export function loginUser(payload: LoginPayload): Promise<AuthResponse> {

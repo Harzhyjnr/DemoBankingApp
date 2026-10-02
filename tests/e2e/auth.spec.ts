@@ -50,8 +50,10 @@ test.describe('Authentication flows', () => {
     await page.getByLabel('First name').fill('Ada')
     await page.getByLabel('Last name').fill('Lovelace')
     await page.getByLabel('Email').fill(email)
+    await page.getByLabel('BVN').fill('22016743512')
+    await page.getByLabel('NIN').fill('11039284671')
     await page.getByLabel('Password', { exact: true }).fill('supersecret1')
-    await page.getByLabel('Confirm password').fill('supersecret1')
+    await page.getByLabel('Confirm password', { exact: true }).fill('supersecret1')
     await page.getByLabel(/I agree to the Terms of Service/).check()
     await page.getByRole('button', { name: 'Create account' }).click()
 
